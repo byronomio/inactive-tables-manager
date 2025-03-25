@@ -3,7 +3,7 @@
  * Plugin Name:       Inactive Tables Manager
  * Plugin URI:        https://heavyweightdigital.co.za
  * Description:       Manages and cleans up database tables from inactive plugins.
- * Version:           1.0
+ * Version:           1.1
  * Requires at least: 4.8
  * Requires PHP:      7.4
  * Author:            Byron Jacobs
@@ -127,23 +127,31 @@ class Inactive_Tables_Manager {
             $action = sanitize_text_field(wp_unslash($_POST['action_table']));
             
             if (!empty($table)) {
+                // First verify the table exists
+                $table_exists = $this->wpdb->get_var($this->wpdb->prepare(
+                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = %s AND table_name = %s",
+                    DB_NAME,
+                    $table
+                ));
+                
+                if (!$table_exists) {
+                    add_settings_error('inactive_tables', 'table_error', "Table {$table} doesn't exist", 'error');
+                    return;
+                }
+    
                 switch ($action) {
                     case 'truncate':
-                        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- False positive: prepare() is used correctly
-                        $result = $this->wpdb->query($this->wpdb->prepare("TRUNCATE TABLE `%s`", $table));
-                        // phpcs:enable
+                        $result = $this->wpdb->query("TRUNCATE TABLE `{$this->wpdb->prefix}{$table}`");
                         if ($result === false) {
                             add_settings_error('inactive_tables', 'table_error', "Failed to truncate {$table}: " . $this->wpdb->last_error, 'error');
                         } else {
-                            // Refresh stats after truncation
                             $stats = $this->get_table_stats($table);
                             add_settings_error('inactive_tables', 'table_truncated', "Table {$table} truncated successfully. New stats: {$stats['rows']} rows, {$stats['size']}", 'success');
                         }
                         break;
+                        
                     case 'drop':
-                        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- False positive: prepare() is used correctly
-                        $result = $this->wpdb->query($this->wpdb->prepare("DROP TABLE `%s`", $table));
-                        // phpcs:enable
+                        $result = $this->wpdb->query("DROP TABLE `{$this->wpdb->prefix}{$table}`");
                         if ($result === false) {
                             add_settings_error('inactive_tables', 'table_error', "Failed to drop {$table}: " . $this->wpdb->last_error, 'error');
                         } else {
@@ -164,7 +172,7 @@ class Inactive_Tables_Manager {
                 switch ($_POST['bulk_action']) {
                     case 'drop':
                         // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- False positive: prepare() is used correctly
-                        $result = $this->wpdb->query($this->wpdb->prepare("DROP TABLE `%s`", $table));
+                        $result = $this->wpdb->query("DROP TABLE `{$table}`");
                         // phpcs:enable
                         if ($result === false) {
                             $errors[] = "Failed to drop {$table}: " . $this->wpdb->last_error;
