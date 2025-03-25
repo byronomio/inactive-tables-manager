@@ -1,0 +1,39 @@
+.button-danger {
+  background: #dc3232;
+  border-color: #dc3232;
+  color: white;
+  margin-left: 5px;
+}
+.button-danger:hover {
+  background: #c32d2d;
+  border-color: #c32d2d;
+}
+.button-secondary {
+  margin-left: 5px;
+}
+.tablenav {
+  margin-bottom: 15px;
+}
+.checkbox-column {
+  width: 1%;
+  white-space: nowrap;
+}
+.table-name-column {
+  width: auto;
+}
+.rows-column {
+  width: 1%;
+  white-space: nowrap;
+}
+.size-column {
+  width: 1%;
+  white-space: nowrap;
+}
+.actions-column {
+  width: 1%;
+  white-space: nowrap;
+}
+.wp-list-table th,
+.wp-list-table td {
+  padding: 8px 10px;
+}
